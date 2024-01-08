@@ -1,2 +1,2 @@
-# LZSSK
-Calculating Assembly Index of Strings using LZSSK (Lempel–Ziv–Storer–Szymanski-Kerner) Factorization
+# LZK
+Calculating Assembly Index of Strings using LZK (Lempel–Ziv-Kerner) Factorization
