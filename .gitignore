@@ -1,20 +1,36 @@
 # Prerequisites
 *.d
 
-# Compiled Object files
+# CMake
+CMakeCache.txt
+CMakeFiles/
+CMakeScripts/
+Testing/
+
+# Visual Studio Code
+.vscode/
+
+# Visual Studio
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Compiled Object files, Static and Dynamic libs (Shared Objects)
 *.slo
 *.lo
 *.o
 *.obj
+*.a
+*.lib
+*.dll
+*.so
+*.dylib
 
 # Precompiled Headers
 *.gch
 *.pch
-
-# Compiled Dynamic libraries
-*.so
-*.dylib
-*.dll
 
 # Fortran module files
 *.mod
@@ -30,3 +46,37 @@
 *.exe
 *.out
 *.app
+
+# Generated files
+Makefile
+CMakeLists.txt.user
+CMakeListsUser.txt
+cmake_install.cmake
+install_manifest.txt
+
+# OS-specific files
+Thumbs.db
+.DS_Store
+ehthumbs.db
+ehthumbs_vista.db
+Icon?
+ehthumbs_*.db
+
+# Custom Rules
+custom.rules
+
+# User-specific files
+*.user
+*.userosscache
+
+# Sublime Text
+*.tmlanguage.cache
+*.tmPreferences.cache
+*.stTheme.cache
+
+# macOS
+.DS_Store
+
+# Windows
+Desktop.ini
+Thumbs.db
