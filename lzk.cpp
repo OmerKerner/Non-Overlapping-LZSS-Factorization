@@ -1,6 +1,11 @@
 /*
-LZSSK - Compute the Lempel–Ziv–Storer–Szymanski-Kerner factorization of a string
+LZK - Compute the Lempel–Ziv–Kerner (LZK) factorization of a string
 Copyright (c) 2024 Omer Kerner
+
+Acknowledgements: This program is based on the pseudocode created by
+Dominik Köppl in his paper <https://doi.org/10.3390/a14020044>.
+It was changed to compute the LZK factorization instead of the 
+non-overlapping LZSS factorization.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -30,14 +35,14 @@ typedef cst_sada<> cst_t;
 static void report(cst_sada<>::node_type node, int j, int l) {
     // Implement your report function here
     //print the node, j and l
-    cout << "node " << node << " j " << j << " l " << l << endl;
+    cout << "node " << node << " reffered sufnum " << j << " len " << l << endl;
 }
 
-//! Next leaf of the suffix tree in text-order
-/*! \param cst The suffix tree
-    \param lambda The current leaf
-    \param iterations The number of iterations to apply to the Psi function
-    \return The next leaf  */
+//!  Get the next leaf of the suffix tree in text order.
+/*! \param cst The suffix tree to search in.
+    \param lambda The current leaf.
+    \param iterations The number of iterations to apply to the Psi function (default is 1).
+    \return The next leaf in text order.*/
 static cst_t::node_type next_leaf(cst_t& cst, cst_t::node_type lambda, size_t iterations = 1)
 {
     // asert lambda is a leaf
@@ -73,48 +78,53 @@ int main(int argc, char* argv[])
     // get the leaf of the first suffix
     auto lambda = cst.select_leaf(cst.csa.isa[0] + 1);
     size_t lambda_node_depth = cst.node_depth(lambda);
+    size_t lambda_sufnum = cst.sn(lambda);
 
-    size_t ai = -1; // assembly index (number of factors reported - 1)
+    int ai = -1; // assembly index (number of factors reported - 1)
 
-    while (cst.sn(lambda) < str_len) { // while the whole text is not processed, compute the next factor. The whole text is processed when the last suffix remaining is '$' {
+    while (lambda_sufnum < str_len) { // while the whole text is not processed, compute the next factor. The whole text is processed when the last suffix remaining is '$' 
         size_t d = 1;
         size_t l = 1;
-        size_t j_u = 0;
-        do {
+        size_t u_min_leaf_sufnum = 0;
+        while (true) {
             auto v = cst.bp_support.level_anc(lambda, lambda_node_depth - d);
-            auto j_v = cst.csa[rmq(cst.lb(v), cst.rb(v))];
+            auto v_min_leaf_sufnum = cst.csa[rmq(cst.lb(v), cst.rb(v))];
             l = cst.depth(v);
-            if (j_v + l - 1 < cst.sn(lambda)) {
-                j_u = j_v;
+            if (v_min_leaf_sufnum + l - 1 < lambda_sufnum) {
+                if (lambda_sufnum + l == str_len) {
+                    report(v, v_min_leaf_sufnum, l); // reached the end of the string, report last factor
+                    break;
+                }
+                u_min_leaf_sufnum = v_min_leaf_sufnum;
                 d++;
                 continue;
             }
             auto u = cst.parent(v);
-            if (j_v == cst.sn(lambda)) {
+            auto u_depth = cst.node_depth(u);
+            if (v_min_leaf_sufnum == lambda_sufnum) {
                 if (u == cst.root()) {
                     l = 1;
-                    report(u, j_u, l); // report a fresh factor, u & j_u are 0
+                    report(u, u_min_leaf_sufnum, l); // report a fresh factor, u & u_min_leaf_sufnum are 0
                     break;
                 }
-                l = cst.depth(u);
-                report(u, j_u, l); // report type 1 factor
+                l = u_depth;
+                report(u, u_min_leaf_sufnum, l); // report type 1 factor
                 break;
             }
-            l = std::min(cst.depth(cst.lca(lambda, (cst.select_leaf(cst.csa.isa[j_v] + 1)))), (cst.sn(lambda) - j_v));
-            cout << "lca " << cst.depth(cst.lca(lambda, (cst.select_leaf(cst.csa.isa[j_v] + 1)))) << " sn-j_v " << (cst.sn(lambda) - j_v) << endl;
-            if (l <= cst.depth(u)) { // report type 2 factor
-                l = cst.depth(u);
-                report(u, j_u, l);
+            l = std::min(cst.depth(cst.lca(lambda, (cst.select_leaf(cst.csa.isa[v_min_leaf_sufnum] + 1)))), (lambda_sufnum - v_min_leaf_sufnum));
+            if (l <= u_depth) { // report type 2 factor
+                l = u_depth;
+                report(u, u_min_leaf_sufnum, l);
             }
             else {
-                report(v, j_v, l); // report type 3 factor
+                report(v, v_min_leaf_sufnum, l); // report type 3 factor
             }
             break;
-        } while (d != lambda_node_depth);
+        }
         ai++;
         lambda = next_leaf(cst, lambda, l);
-        size_t lambda_node_depth = cst.node_depth(lambda);
-        cout << "lambda " << lambda << " lambda_node_depth " << lambda_node_depth << " sn " << cst.sn(lambda) << endl;
+        lambda_node_depth = cst.node_depth(lambda);
+        lambda_sufnum = cst.sn(lambda);
     } 
     cout << "ai " << ai << endl;
     return ai;
