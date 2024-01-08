@@ -1,5 +1,5 @@
 /*
-LZSSK - Compute the Lempel–Ziv–Storer–Szymanski-Kerner factorization of a string
+LZSSK - Compute the Lempelâ€“Zivâ€“Storerâ€“Szymanski-Kerner factorization of a string
 Copyright (c) 2024 Omer Kerner
 
 This program is free software: you can redistribute it and/or modify
