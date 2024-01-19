@@ -57,14 +57,28 @@ static void report(cst_t& cst, size_t j_sufnum, size_t lambda_sufnum, size_t l, 
     b_fe[lambda_sufnum + l - 1] = 1;
 }
 
-size_t lcp(size_t i, size_t j, const std::string& filePath) {
-    std::ifstream file1(filePath);
-    std::ifstream file2(filePath);
-    if (!file1.is_open() || !file2.is_open()) {
-        throw std::runtime_error("Could not open file");
+size_t lcp(size_t i, size_t j, const std::string& input, bool is_file) {
+    std::istream *stream1, *stream2;
+    std::ifstream file1, file2;
+    std::stringstream ss1, ss2;
+
+    if (is_file) {
+        file1.open(input);
+        file2.open(input);
+        if (!file1.is_open() || !file2.is_open()) {
+            throw std::runtime_error("Could not open file");
+        }
+        stream1 = &file1;
+        stream2 = &file2;
+    } else {
+        ss1.str(input);
+        ss2.str(input);
+        stream1 = &ss1;
+        stream2 = &ss2;
     }
-    file1.seekg(i);
-    file2.seekg(j);
+
+    stream1->seekg(i);
+    stream2->seekg(j);
     size_t length = 0;
     char ch1, ch2;
     while (file1.get(ch1) && file2.get(ch2) && ch1 == ch2) {
@@ -117,14 +131,37 @@ static cst_t::node_type next_leaf(cst_t& cst, cst_t::node_type lambda, size_t it
  */
 int main(int argc, char* argv[])
 {
-    if (argc < 2) {
-        cout << "usage: " << argv[0] << " file" << std::endl;
+    if (argc < 3) {
+        cout << "usage: " << argv[0] << " -f filepath | -s string" << std::endl;
         return -1;
+    }
+
+    int opt;
+    std::string input;
+    bool is_file = false;
+    while ((opt = getopt(argc, argv, "f:s:")) != -1) {
+        switch (opt) {
+        case 'f':
+            input = std::string(optarg);
+            is_file = true;
+            break;
+        case 's':
+            input = std::string(optarg);
+            is_file = false;
+            break;
+        default:
+            cout << "usage: " << argv[0] << " -f filepath | -s string" << std::endl;
+            return -1;
+        }
     }
 
     // construct the CST
     cst_t cst;
-    construct(cst, argv[1], 1);
+    if (is_file) {
+        construct(cst, input, 1);
+    } else {
+        construct_im(cst, input, 1);
+    }
     rmq_succinct_sct<> rmq(&cst.csa);
     size_t str_len = cst.size() - 1; // the length of the string is the size of the CST minus the '$' character
 
@@ -184,7 +221,7 @@ int main(int argc, char* argv[])
                     break;
                 }
             }
-            l = std::min(lcp(lambda_sufnum, v_descendant_sufnum, argv[1]), (lambda_sufnum - v_descendant_sufnum));
+            l = std::min(lcp(lambda_sufnum, v_descendant_sufnum, input, is_file), (lambda_sufnum - v_descendant_sufnum));
             if (l <= u_depth) {
                 auto factor = get_factor(cst, lambda_sufnum, u_depth, u, num_of_valid_u_descendatns, b_fb, b_fe);
                 u_descendant_sufnum = factor.first;
