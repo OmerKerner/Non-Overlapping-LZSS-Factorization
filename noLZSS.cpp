@@ -42,34 +42,11 @@ typedef cst_sada<> cst_t;
 static void report(size_t j_sufnum, cst_t::node_type witness, size_t lambda_sufnum, size_t l) {
 }
 
-size_t lcp(size_t i, size_t j, const std::string& input, bool is_file) {
-    std::istream *stream1, *stream2;
-    std::ifstream file1, file2;
-    std::stringstream ss1, ss2;
-
-    if (is_file) {
-        file1.open(input);
-        file2.open(input);
-        if (!file1.is_open() || !file2.is_open()) {
-            throw std::runtime_error("Could not open file");
-        }
-        stream1 = &file1;
-        stream2 = &file2;
-    } else {
-        ss1.str(input);
-        ss2.str(input);
-        stream1 = &ss1;
-        stream2 = &ss2;
-    }
-
-    stream1->seekg(i);
-    stream2->seekg(j);
-    size_t length = 0;
-    char ch1, ch2;
-    while (file1.get(ch1) && file2.get(ch2) && ch1 == ch2) {
-        ++length;
-    }
-    return length;
+size_t lcp(cst_t& cst, size_t i, size_t j) {
+    // use the lcp array of cst to calc the lcp of the suffixes i and j
+    if (i == j) return cst.csa.size() - cst.csa[i];
+    auto lca = cst.lca(cst.select_leaf(cst.csa.isa[i]+1), cst.select_leaf(cst.csa.isa[j]+1));
+    return cst.depth(lca);
 }
 
 /**
@@ -93,11 +70,11 @@ static cst_t::node_type next_leaf(cst_t& cst, cst_t::node_type lambda, size_t it
 }
 
 /**
- * @brief Main function that computes the LZK factorization and assembly index of a string.
+ * @brief Main function that computes the LZK factorization.
  *
  * @param argc The number of command line arguments.
  * @param argv The array of command line arguments. argv[1] should be the path to the file containing the string.
- * @return Returns -1 for indicating an error. Otherwise, returns the assembly index.
+ * @return Returns -1 for indicating an error. Otherwise, returns the number of factors minus one.
  */
 int main(int argc, char* argv[])
 {
@@ -172,7 +149,7 @@ int main(int argc, char* argv[])
                     break;
                 }
             }
-            l = std::min(lcp(lambda_sufnum, v_min_leaf_sufnum, input, is_file), (lambda_sufnum - v_min_leaf_sufnum));
+            l = std::min(lcp(cst, lambda_sufnum, v_min_leaf_sufnum), (lambda_sufnum - v_min_leaf_sufnum));
             if (l <= u_depth) {
                 l = u_depth;
                 report(u_min_leaf_sufnum, u, lambda_sufnum, l); // report a type 2 factor
@@ -188,6 +165,6 @@ int main(int argc, char* argv[])
         lambda_node_depth = cst.node_depth(lambda);
         lambda_sufnum = cst.sn(lambda);
     } 
-    cout << num_of_factors - 1 << endl; // assembly index is the number of factors minus 1
+    cout << num_of_factors - 1 << endl; // should return the number of factors minus 1
     return 0; 
 }
