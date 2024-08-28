@@ -1,6 +1,6 @@
 /*
 Compute the Non-Overlapping-LZSS-Factorization of a string
-Copyright (c) 2024 Omer Kerner
+Copyright (c) 2024 Dr. Omer Kerner
 
 Acknowledgements: This program is based on the pseudocode created by
 Dominik Köppl in his paper <https://doi.org/10.3390/a14020044>.
@@ -69,46 +69,14 @@ static cst_t::node_type next_leaf(cst_t& cst, cst_t::node_type lambda, size_t it
     return next_leaf;
 }
 
+
 /**
- * @brief Main function that computes the LZK factorization.
+ * @brief Compute the number of Non-Overlapping-LZSS factors of a string.
  *
- * @param argc The number of command line arguments.
- * @param argv The array of command line arguments. argv[1] should be the path to the file containing the string.
- * @return Returns -1 for indicating an error. Otherwise, returns the number of factors minus one.
+ * @param cst The compressed suffix tree of the string.
+ * @return The number of factors minus one.
  */
-int main(int argc, char* argv[])
-{
-    if (argc < 3) {
-        cout << "usage: " << argv[0] << " -f filepath | -s string" << std::endl;
-        return -1;
-    }
-
-    int opt;
-    std::string input;
-    bool is_file = false;
-    while ((opt = getopt(argc, argv, "f:s:")) != -1) {
-        switch (opt) {
-        case 'f':
-            input = std::string(optarg);
-            is_file = true;
-            break;
-        case 's':
-            input = std::string(optarg);
-            is_file = false;
-            break;
-        default:
-            cout << "usage: " << argv[0] << " -f filepath | -s string" << std::endl;
-            return -1;
-        }
-    }
-
-    // construct the CST
-    cst_t cst;
-    if (is_file) {
-        construct(cst, input, 1);
-    } else {
-        construct_im(cst, input, 1);
-    }
+size_t lzss(cst_t& cst) {
     rmq_succinct_sct<> rmq(&cst.csa);
     size_t str_len = cst.size() - 1; // the length of the string is the size of the CST minus the '$' character
 
@@ -121,7 +89,6 @@ int main(int argc, char* argv[])
     size_t v_min_leaf_sufnum = 0;
     size_t u_min_leaf_sufnum = 0;
     size_t num_of_factors = 0;
-
 
     while (lambda_sufnum < str_len) { // while the whole text is not processed, compute the next factor. The whole text is processed when the last suffix remaining is '$' 
         size_t d = 1;
@@ -164,7 +131,57 @@ int main(int argc, char* argv[])
         lambda = next_leaf(cst, lambda, l);
         lambda_node_depth = cst.node_depth(lambda);
         lambda_sufnum = cst.sn(lambda);
-    } 
-    cout << num_of_factors - 1 << endl; // should return the number of factors minus 1
+    }
+    return num_of_factors - 1;
+}
+
+/**
+ * @brief Main function that computes the Non-Overlapping-LZSS-Factorization factorization.
+ *
+ * @param argc The number of command line arguments.
+ * @param argv The array of command line arguments. argv[1] should be the path to the file containing the string.
+ * @return Returns -1 for indicating an error. Otherwise, returns the number of factors minus one.
+ */
+int main(int argc, char* argv[])
+{
+    if (argc < 3) {
+        cout << "usage: " << argv[0] << " -f filepath | -s string" << std::endl;
+        return -1;
+    }
+
+    int opt;
+    std::string input;
+    bool is_file = false;
+    while ((opt = getopt(argc, argv, "f:s:")) != -1) {
+        switch (opt) {
+        case 'f':
+            input = std::string(optarg);
+            is_file = true;
+            break;
+        case 's':
+            input = std::string(optarg);
+            is_file = false;
+            break;
+        default:
+            cout << "usage: " << argv[0] << " -f filepath | -s string" << std::endl;
+            return -1;
+        }
+    }
+
+    // construct the CST
+    cst_t cst;
+    if (is_file) {
+        construct(cst, input, 1);
+    } else {
+        construct_im(cst, input, 1);
+    }
+    size_t num_of_factors = lzss(cst);
+    cout << num_of_factors << endl; // should return the number of factors minus 1
     return 0; 
+}
+
+extern "C" int nolzss(const char* str) {
+    cst_t cst;
+    construct_im(cst, str, 1);
+    return lzss(cst);
 }
