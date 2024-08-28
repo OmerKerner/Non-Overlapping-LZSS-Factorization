@@ -22,5 +22,5 @@ import ctypes
 noLZSS = ctypes.CDLL('./noLZSS.so')
 noLZSS.nolzss.argtypes = [ctypes.c_char_p]
 noLZSS.nolzss.restype = ctypes.c_int
-noLZSS.nolzss('ABRACADABRA')
+noLZSS.nolzss('ABRACADABRA'.encode())
 ```
