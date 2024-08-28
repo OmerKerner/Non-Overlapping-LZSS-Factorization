@@ -8,12 +8,12 @@ cmake -DCMAKE_C_FLAGS="-fPIC" -DCMAKE_CXX_FLAGS="-fPIC" ...
 
 ## Compile the executable:
 ```
-g++ -g -std=c++11 -DNDEBUG -O3 -I/home/user/include -L/home/user/lib noLZSS.cpp -lsdsl -ldivsufsort -ldivsufsort64 -o noLZSS
+g++ -std=c++11 -DNDEBUG -O3 -I/home/user/include -L/home/user/lib noLZSS.cpp -lsdsl -ldivsufsort -ldivsufsort64 -o noLZSS
 ```
 
 ## Compile the shared object with:
 ```
-g++ -shared -fPIC -g -std=c++11 -DNDEBUG -O3 -I/home/user/include -L/home/user/lib noLZSS.cpp -lsdsl -ldivsufsort -ldivsufsort64 -o noLZSS.so
+g++ -shared -fPIC -std=c++11 -DNDEBUG -O3 -I/home/user/include -L/home/user/lib noLZSS.cpp -lsdsl -ldivsufsort -ldivsufsort64 -o noLZSS.so
 ```
 
 ## Using the shared object in python:
